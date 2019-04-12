@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text;
 using Xunit;
 
 namespace Paramore.Brighter.Tests.MessageMapper
@@ -11,7 +10,7 @@ namespace Paramore.Brighter.Tests.MessageMapper
         {
             var requestContext = new RequestContext();
 
-            var mapper = new GenericJsonMessageMapper<TestedEvent>(requestContext);
+            var mapper = new JsonMessageMapper<TestedEvent>(requestContext);
 
             DateTime dateTime = DateTime.UtcNow;
             TestedEvent testedEvent = new TestedEvent
@@ -45,7 +44,7 @@ namespace Paramore.Brighter.Tests.MessageMapper
         {
             var requestContext = new RequestContext();
 
-            var mapper = new GenericJsonMessageMapper<TestCommand>(requestContext);
+            var mapper = new JsonMessageMapper<TestCommand>(requestContext);
 
             DateTime dateTime = DateTime.UtcNow;
             TestCommand testCommand = new TestCommand
@@ -74,9 +73,31 @@ namespace Paramore.Brighter.Tests.MessageMapper
         }
 
         [Fact]
+        public void when_mapping_to_a_command_from_json()
+        {
+            var requestContext = new RequestContext();
+            var mapper = new JsonMessageMapper<TestCommand>(requestContext);
+
+
+            var body = "{\"message\":\"This is a message\",\"number\":999,\"dateNow\":\"2019-04-09T15:06:56.7623017Z\",\"id\":\"7d9120b9-a18e-43ac-a63e-8201a43ea623\"}";
+            var correlationId = Guid.NewGuid();
+            var message = new Message(new MessageHeader(new Guid("7d9120b9-a18e-43ac-a63e-8201a43ea623"),"Blah",  MessageType.MT_COMMAND, correlationId: correlationId), new MessageBody(body));
+
+            var testCommand = mapper.MapToRequest(message);
+
+
+            Assert.Equal("7d9120b9-a18e-43ac-a63e-8201a43ea623", testCommand.Id.ToString());
+            Assert.Equal("This is a message", testCommand.Message);
+            Assert.Equal(999, testCommand.Number);
+            Assert.Equal(DateTime.Parse("2019-04-09T15:06:56.7623017Z").ToUniversalTime(), testCommand.DateNow);
+
+            Assert.Equal(correlationId,  requestContext.Header.CorrelationId);
+        }
+
+        [Fact]
         public void When_mapping_with_custom_routing_key_to_a_message()
         {
-            var mapper = new GenericJsonMessageMapper<TestCommand>(new RequestContext(), new RoutingKey("MyTestRoute"));
+            var mapper = new JsonMessageMapper<TestCommand>(new RequestContext(), new RoutingKey("MyTestRoute"));
 
             var testCommand = new TestCommand();
 
@@ -88,7 +109,7 @@ namespace Paramore.Brighter.Tests.MessageMapper
         [Fact]
         public void When_mapping_with_custom_routing_key_to_a_message2()
         {
-            var mapper = new GenericJsonMessageMapper<TestCommand>(new RequestContext(), routingKeyFunc: request =>
+            var mapper = new JsonMessageMapper<TestCommand>(new RequestContext(), routingKeyFunc: request =>
             {
                 string topic = "TestPreAmble.";
 
