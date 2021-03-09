@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 using Microsoft.Extensions.Configuration;
-using MySql.Data.MySqlClient;
+using MySqlConnector;
 using Paramore.Brighter.CommandStore.MySql;
 using Paramore.Brighter.MessageStore.MySql;
 
